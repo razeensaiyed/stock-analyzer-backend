@@ -40,6 +40,7 @@ def analyze():
            
            # Parse the result
         result_str = str(result)
+        result_str = result_str.replace('</r>', '').replace('<r>', '').strip()
         decision = "UNKNOWN"
         confidence = "UNKNOWN"
         risk = "UNKNOWN"
