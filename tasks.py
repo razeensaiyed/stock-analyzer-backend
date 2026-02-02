@@ -1,6 +1,7 @@
 from crewai import Task
 from agents import quantitative_analyst, research_analyst, portfolio_manager
-from tools import get_stock_price, get_fundamentals, calculate_value_score
+from tools_hybrid import get_stock_price, get_fundamentals, calculate_value_score
+from news_tools import get_google_news
 
 # ============================================================================
 # TASK 1: QUANTITATIVE ANALYSIS
@@ -42,7 +43,7 @@ def create_quant_task(ticker: str) -> Task:
     )
 
 # ============================================================================
-# TASK 2: QUALITATIVE RESEARCH
+# TASK 2: QUALITATIVE RESEARCH (NOW WITH NEWS)
 # ============================================================================
 
 def create_research_task(ticker: str) -> Task:
@@ -54,35 +55,38 @@ def create_research_task(ticker: str) -> Task:
 
         Steps:
         1. Use 'Get Stock Fundamentals' to get the sector
-        2. Based on the sector, provide qualitative analysis BUT clearly label 
+        2. Use 'Get Google News' to get recent news about the company
+        3. Based on the sector and news, provide qualitative analysis BUT clearly label 
            each point as one of:
-           - [KNOWN] - Well-established facts about the company
+           - [KNOWN] - Well-established facts about the company or from recent news
            - [INFERRED] - Reasonable inference based on sector/known data
            - [NEEDS VERIFICATION] - Something that should be checked against 
              current news/annual reports before acting on
 
-        3. Analyze:
+        4. Analyze:
            - Competitive position in sector
            - Business model strength
            - Key risks
            - Growth prospects
+           - Recent news sentiment (positive/negative/neutral)
 
-        4. Give sentiment: BULLISH, NEUTRAL, or BEARISH
-        5. Give confidence: HIGH, MEDIUM, or LOW
+        5. Give sentiment: BULLISH, NEUTRAL, or BEARISH
+        6. Give confidence: HIGH, MEDIUM, or LOW
            - If most points are [INFERRED] or [NEEDS VERIFICATION], 
              confidence MUST be LOW or MEDIUM
 
         Your output MUST include:
         - Sector and business overview
+        - News sentiment summary (if news available)
         - 2-3 strengths (each labeled [KNOWN]/[INFERRED]/[NEEDS VERIFICATION])
         - 2-3 risks (each labeled)
         - Sector outlook (labeled)
         - Sentiment and confidence
         - A clear note on what data would improve this analysis""",
         expected_output="""Qualitative analysis with transparently labeled points, 
-        sentiment, confidence level, and data gaps identified.""",
+        news sentiment, confidence level, and data gaps identified.""",
         agent=research_analyst,
-        tools=[get_fundamentals]
+        tools=[get_fundamentals, get_google_news]  # Added news tool
     )
 
 # ============================================================================
@@ -122,7 +126,7 @@ def create_decision_task(ticker: str) -> Task:
 
         Your output MUST include:
         - Summary of Agent 1 findings (1-2 sentences)
-        - Summary of Agent 2 findings (1-2 sentences)
+        - Summary of Agent 2 findings (1-2 sentences, include news sentiment if available)
         - Which row of the decision matrix you applied and why
         - FINAL DECISION: [BUY/SELL/WATCH/AVOID]
         - CONFIDENCE: [HIGH/MEDIUM/LOW]
